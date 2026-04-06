@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V5.4</title>
+<title>BASEBALL SCORESHEET - V5.5</title>
 <style>
 #version-stamp {
-    background: #000; color: #ffa500; padding: 8px 15px; 
+    background: #000; color: #00ff00; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin-bottom: 15px; display: inline-block; font-weight: bold;
 }
@@ -18,13 +18,18 @@ body {
     touch-action: manipulation; min-width: 800px;
 }
 
-/* HARD OVERRIDE FOR ALL INPUTS */
 input {
     text-align: center !important;
     border: none; outline: none; background: transparent;
     width: 100%; height: 100%; padding: 0 !important; margin: 0 !important;
     display: block !important;
     -webkit-appearance: none; border-radius: 0;
+}
+
+/* FORCE LEFT JUSTIFY FOR BATTING NAMES (COL 3) */
+.col-3 input {
+    text-align: left !important;
+    padding-left: 5px !important;
 }
 
 .grid {
@@ -38,12 +43,9 @@ input {
     overflow: hidden; box-sizing: border-box;
 }
 
-/* THE DIVIDING LINE FOR NAMES/POS */
 .dual-input { height: 50% !important; }
 .border-mid { border-bottom: 1px solid #bbb !important; }
-
-/* ROW 1 GHOST BOX FIX */
-.hidden-cell { visibility: hidden !important; border: none !important; background: transparent !important; }
+.hidden-cell { visibility: hidden !important; border: none !important; }
 
 .team-header-input { font-size: 18px !important; font-weight: bold !important; text-transform: uppercase; }
 .inning-input { font-weight: bold; font-size: 18px; }
@@ -57,11 +59,11 @@ input {
 
 .mini-canvas { position: absolute; right: 0; top: 0; width: 44px !important; height: 48px !important; pointer-events: none; z-index: 10; }
 
-/* PITCHING TABLE - RIGID PIXELS */
+/* PITCHING TABLE RIGIDITY */
 .pitching-section { display: flex; gap: 15px; margin-top: 30px; width: 755px; }
 .pitching-table { border-collapse: collapse; background: white; font-size: 12px; table-layout: fixed; width: 370px; }
-.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; margin: 0; vertical-align: middle; }
-.pitching-table th { background: #f2f2f2; font-weight: bold; }
+.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; margin: 0; }
+.pitching-table th { background: #f2f2f2; }
 
 /* POPUPS */
 #drawing-popup { 
@@ -83,7 +85,7 @@ input {
 </head>
 <body>
 
-<div id="version-stamp">LOADED VERSION: 5.4 (Style Lockdown)</div>
+<div id="version-stamp">LOADED VERSION: 5.5 (Final Polish & Input fix)</div>
 
 <div class="grid" id="grid1"></div>
 <div class="grid" id="grid2"></div>
@@ -207,11 +209,17 @@ function createGrid(gridElement){
 
 function createPitchingTable(tableId) {
     const table = document.getElementById(tableId);
+    const widths = [25, 130, 35, 40, 20, 20, 20, 20, 20, 20];
     for(let i=0; i<8; i++) {
         const tr = document.createElement('tr');
         for(let j=0; j<10; j++) {
             const td = document.createElement('td');
+            td.style.width = widths[j] + "px"; // Force width on every cell
             const input = document.createElement('input');
+            // Force numeric keyboard for stat columns
+            if(j >= 3) { 
+                input.setAttribute('inputmode', 'decimal'); 
+            }
             if(j===3) { // IP logic
                 input.onblur = () => { let val = input.value; if(val && !isNaN(val) && !val.includes('.')) input.value = val + ".0"; saveData(); };
             }
@@ -221,7 +229,6 @@ function createPitchingTable(tableId) {
     }
 }
 
-// Coordinate and Drawing logic (Same as V5.3)
 const getCoords = (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -248,10 +255,10 @@ function saveData(){
   document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
   document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
   document.querySelectorAll('#pitch1 input, #pitch2 input').forEach(i => data.pitch.push(i.value));
-  localStorage.setItem('scoresheetV5_4', JSON.stringify(data));
+  localStorage.setItem('scoresheetV5_5', JSON.stringify(data));
 }
 function loadData(){
-  const saved = JSON.parse(localStorage.getItem('scoresheetV5_4') || '{}');
+  const saved = JSON.parse(localStorage.getItem('scoresheetV5_5') || '{}');
   if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
   const applyData = (cells, savedList) => {
     if(!savedList) return;
