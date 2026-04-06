@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V5.3</title>
+<title>BASEBALL SCORESHEET - V5.4</title>
 <style>
 #version-stamp {
-    background: #000; color: #ffff00; padding: 8px 15px; 
+    background: #000; color: #ffa500; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin-bottom: 15px; display: inline-block; font-weight: bold;
 }
@@ -18,13 +18,13 @@ body {
     touch-action: manipulation; min-width: 800px;
 }
 
-/* THE GLOBAL CENTERING RULE */
+/* HARD OVERRIDE FOR ALL INPUTS */
 input {
     text-align: center !important;
-    justify-content: center !important;
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    border-radius: 0 !important;
+    border: none; outline: none; background: transparent;
+    width: 100%; height: 100%; padding: 0 !important; margin: 0 !important;
+    display: block !important;
+    -webkit-appearance: none; border-radius: 0;
 }
 
 .grid {
@@ -38,13 +38,15 @@ input {
     overflow: hidden; box-sizing: border-box;
 }
 
-.cell-input {
-    border: none; outline: none; background: transparent; text-transform: uppercase;
-    width: 100%; height: 50%; font-size: 12px;
-}
+/* THE DIVIDING LINE FOR NAMES/POS */
+.dual-input { height: 50% !important; }
+.border-mid { border-bottom: 1px solid #bbb !important; }
 
-.team-header-input { height: 100% !important; font-size: 18px !important; font-weight: bold !important; border:none; width: 100%; }
-.inning-input { width: 100%; height: 100%; border: none; font-weight: bold; font-size: 18px; }
+/* ROW 1 GHOST BOX FIX */
+.hidden-cell { visibility: hidden !important; border: none !important; background: transparent !important; }
+
+.team-header-input { font-size: 18px !important; font-weight: bold !important; text-transform: uppercase; }
+.inning-input { font-weight: bold; font-size: 18px; }
 
 .diagonal-slash { background-color: #f0f0f0 !important; }
 .diagonal-slash::after {
@@ -55,23 +57,11 @@ input {
 
 .mini-canvas { position: absolute; right: 0; top: 0; width: 44px !important; height: 48px !important; pointer-events: none; z-index: 10; }
 
-/* PITCHING TABLE - ABSOLUTE PIXEL CONTROL */
+/* PITCHING TABLE - RIGID PIXELS */
 .pitching-section { display: flex; gap: 15px; margin-top: 30px; width: 755px; }
-.pitching-table { border-collapse: collapse; background: white; font-size: 12px; width: 370px; table-layout: fixed; }
-.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; overflow: hidden; margin: 0; }
-.pitching-table th { background: #f2f2f2; text-align: center !important; font-weight: bold; }
-
-.pitch-input { 
-    width: 100%; height: 100%; border: none; outline: none; background: transparent; 
-    font-size: 14px; text-transform: uppercase; display: block;
-}
-
-/* Specific Column Widths */
-.col-t { width: 25px; }
-.col-name { width: 140px; }
-.col-dec { width: 35px; }
-.col-ip { width: 42px; }
-.col-stat { width: 22px; }
+.pitching-table { border-collapse: collapse; background: white; font-size: 12px; table-layout: fixed; width: 370px; }
+.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; margin: 0; vertical-align: middle; }
+.pitching-table th { background: #f2f2f2; font-weight: bold; }
 
 /* POPUPS */
 #drawing-popup { 
@@ -93,7 +83,7 @@ input {
 </head>
 <body>
 
-<div id="version-stamp">LOADED VERSION: 5.3 (Final Width Alignment)</div>
+<div id="version-stamp">LOADED VERSION: 5.4 (Style Lockdown)</div>
 
 <div class="grid" id="grid1"></div>
 <div class="grid" id="grid2"></div>
@@ -101,32 +91,32 @@ input {
 <div class="pitching-section">
     <table class="pitching-table" id="pitch1">
         <tr><th colspan="10" id="team1-label" style="font-size:15px; height:35px;">VISITOR</th></tr>
-        <tr>
-            <th class="col-t">T</th>
-            <th class="col-name">NAME</th>
-            <th class="col-dec">DEC</th>
-            <th class="col-ip">IP</th>
-            <th class="col-stat">H</th><th class="col-stat">R</th><th class="col-stat">ER</th>
-            <th class="col-stat">K</th><th class="col-stat">BB</th><th class="col-stat">HR</th>
+        <tr style="height:30px;">
+            <th style="width:25px;">T</th>
+            <th style="width:130px;">NAME</th>
+            <th style="width:35px;">DEC</th>
+            <th style="width:40px;">IP</th>
+            <th style="width:20px;">H</th><th style="width:20px;">R</th><th style="width:20px;">ER</th>
+            <th style="width:20px;">K</th><th style="width:20px;">BB</th><th style="width:20px;">HR</th>
         </tr>
     </table>
     <table class="pitching-table" id="pitch2">
         <tr><th colspan="10" id="team2-label" style="font-size:15px; height:35px;">HOME</th></tr>
-        <tr>
-            <th class="col-t">T</th>
-            <th class="col-name">NAME</th>
-            <th class="col-dec">DEC</th>
-            <th class="col-ip">IP</th>
-            <th class="col-stat">H</th><th class="col-stat">R</th><th class="col-stat">ER</th>
-            <th class="col-stat">K</th><th class="col-stat">BB</th><th class="col-stat">HR</th>
+        <tr style="height:30px;">
+            <th style="width:25px;">T</th>
+            <th style="width:130px;">NAME</th>
+            <th style="width:35px;">DEC</th>
+            <th style="width:40px;">IP</th>
+            <th style="width:20px;">H</th><th style="width:20px;">R</th><th style="width:20px;">ER</th>
+            <th style="width:20px;">K</th><th style="width:20px;">BB</th><th style="width:20px;">HR</th>
         </tr>
     </table>
 </div>
 
 <div style="margin-top: 40px; display: flex; gap: 15px;">
     <button id="clear-all-btn" style="background: #cc0000; color: white; width: 150px; border:none; height:55px; cursor:pointer; font-weight:bold; border-radius:8px;">CLEAR ALL</button>
-    <input type="text" id="bg-url" placeholder="Paste Background URL" style="width: 350px; padding: 15px; text-align: left !important;">
-    <button id="update-bg" style="padding: 15px 25px; cursor: pointer; font-weight:bold;">Update BG</button>
+    <input type="text" id="bg-url" placeholder="Paste Background URL" style="width: 350px; padding: 15px; text-align: left !important; background:white; border: 1px solid #ccc;">
+    <button id="update-bg" style="padding: 15px 25px; cursor: pointer; font-weight:bold; background:#ddd; border: 1px solid #999;">Update BG</button>
 </div>
 
 <div id="drawing-popup">
@@ -145,7 +135,6 @@ input {
     </div>
   </div>
 </div>
-
 <div id="position-popup"></div>
 
 <script>
@@ -172,7 +161,10 @@ function createGrid(gridElement){
       const cell = document.createElement('div');
       cell.classList.add('cell', `row-${r}`, `col-${c}`);
       if(r===13 && c>=4) cell.classList.add('diagonal-slash');
-      if(r===1 && c>=3){
+      
+      if(r===1 && c<3) {
+          cell.classList.add('hidden-cell');
+      } else if(r===1 && c>=3){
         const inp = document.createElement('input'); 
         inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
         if(c>3 && c<=12) inp.value = c-3;
@@ -183,12 +175,12 @@ function createGrid(gridElement){
                 label.textContent = inp.value.toUpperCase() || (gridElement.id === 'grid1' ? "VISITOR" : "HOME");
                 saveData();
             };
-        } else { inp.oninput = saveData; }
+        }
         cell.appendChild(inp);
       }
       else if((c===1 || c===2 || c===3) && r!==1){
-        const t = document.createElement('input'); t.classList.add('cell-input');
-        const b = document.createElement('input'); b.classList.add('cell-input');
+        const t = document.createElement('input'); t.classList.add('dual-input', 'border-mid');
+        const b = document.createElement('input'); b.classList.add('dual-input');
         t.oninput = saveData; b.oninput = saveData;
         if(c===1) {
             [t, b].forEach(inp => {
@@ -215,89 +207,51 @@ function createGrid(gridElement){
 
 function createPitchingTable(tableId) {
     const table = document.getElementById(tableId);
-    const cols = ['t','name','dec','ip','h','r','er','k','bb','hr'];
     for(let i=0; i<8; i++) {
         const tr = document.createElement('tr');
-        cols.forEach(col => {
+        for(let j=0; j<10; j++) {
             const td = document.createElement('td');
             const input = document.createElement('input');
-            input.classList.add('pitch-input');
-            if(['ip','h','r','er','k','bb','hr'].includes(col)) {
-                input.setAttribute('inputmode', 'decimal');
-                input.setAttribute('type', 'text');
-            }
-            if(col === 'ip') {
-                input.onblur = () => {
-                    let val = input.value;
-                    if(val && !isNaN(val) && !val.includes('.')) input.value = val + ".0";
-                    saveData();
-                };
+            if(j===3) { // IP logic
+                input.onblur = () => { let val = input.value; if(val && !isNaN(val) && !val.includes('.')) input.value = val + ".0"; saveData(); };
             }
             input.oninput = saveData; td.appendChild(input); tr.appendChild(td);
-        });
+        }
         table.appendChild(tr);
     }
 }
 
+// Coordinate and Drawing logic (Same as V5.3)
 const getCoords = (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return [(clientX - rect.left) * (400 / rect.width), (clientY - rect.top) * (400 / rect.height)];
 };
-
 const startDraw = (e) => { e.preventDefault(); drawing=true; [lastX, lastY] = getCoords(e); };
-const moveDraw = (e) => { 
-    if(!drawing) return; e.preventDefault(); const [x,y]=getCoords(e); 
-    ctx.strokeStyle=brushColor; ctx.lineWidth=24; ctx.lineCap='round'; 
-    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.stroke(); [lastX,lastY]=[x,y]; 
-};
+const moveDraw = (e) => { if(!drawing) return; e.preventDefault(); const [x,y]=getCoords(e); ctx.strokeStyle=brushColor; ctx.lineWidth=24; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.stroke(); [lastX,lastY]=[x,y]; };
 const stopDraw = () => drawing = false;
-
-canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', moveDraw); window.addEventListener('mouseup', stopDraw);
 canvas.addEventListener('touchstart', startDraw, {passive: false}); canvas.addEventListener('touchmove', moveDraw, {passive: false}); canvas.addEventListener('touchend', stopDraw);
-
 document.getElementById('black-btn').onclick = () => brushColor='black';
 document.getElementById('red-btn').onclick = () => brushColor='red';
 document.getElementById('clear-btn').onclick = () => { cellDrawings.delete(currentCell); refreshPopup(); };
 document.getElementById('ph-btn').onclick = (e) => { e.stopPropagation(); currentCell.classList.toggle('ph-border'); saveData(); };
 document.getElementById('rp-btn').onclick = (e) => { e.stopPropagation(); currentCell.classList.toggle('rp-border'); saveData(); };
-document.getElementById('end-btn').onclick = () => {
-    ctx.strokeStyle = '#444'; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(400,400); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(400,0); ctx.lineTo(0,400); ctx.stroke();
-};
-
-document.getElementById('ok-btn').onclick = () => {
-    if(!currentCell) return;
-    const finalData = canvas.toDataURL();
-    cellDrawings.set(currentCell, finalData);
-    let mini = currentCell.querySelector('.mini-canvas') || document.createElement('canvas');
-    mini.className = 'mini-canvas'; currentCell.appendChild(mini);
-    mini.width = 44; mini.height = 48;
-    const mCtx = mini.getContext('2d');
-    const img = new Image(); img.onload = () => { mCtx.clearRect(0,0,44,48); mCtx.drawImage(img, 0, 0, 44, 48); saveData(); };
-    img.src = finalData;
-    document.getElementById('drawing-popup').style.display = 'none';
-};
-
+document.getElementById('end-btn').onclick = () => { ctx.strokeStyle = '#444'; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(400,400); ctx.stroke(); ctx.beginPath(); ctx.moveTo(400,0); ctx.lineTo(0,400); ctx.stroke(); };
+document.getElementById('ok-btn').onclick = () => { if(!currentCell) return; const finalData = canvas.toDataURL(); cellDrawings.set(currentCell, finalData); let mini = currentCell.querySelector('.mini-canvas') || document.createElement('canvas'); mini.className = 'mini-canvas'; currentCell.appendChild(mini); mini.width = 44; mini.height = 48; const mCtx = mini.getContext('2d'); const img = new Image(); img.onload = () => { mCtx.clearRect(0,0,44,48); mCtx.drawImage(img, 0, 0, 44, 48); saveData(); }; img.src = finalData; document.getElementById('drawing-popup').style.display = 'none'; };
 document.getElementById('clear-all-btn').onclick = () => { if(confirm("Wipe sheet?")) { localStorage.clear(); location.reload(); } };
 document.getElementById('update-bg').onclick = () => { document.body.style.backgroundImage = `url('${document.getElementById('bg-url').value}')`; saveData(); };
 
 function saveData(){
   const data = { grid1: [], grid2: [], pitch: [], bg: document.getElementById('bg-url').value };
-  const getCellData = (cell) => ({
-      v: [...cell.querySelectorAll('input')].map(inp=>inp.value),
-      d: cellDrawings.get(cell) || null,
-      b: { ph: cell.classList.contains('ph-border'), rp: cell.classList.contains('rp-border') }
-  });
+  const getCellData = (cell) => ({ v: [...cell.querySelectorAll('input')].map(inp=>inp.value), d: cellDrawings.get(cell) || null, b: { ph: cell.classList.contains('ph-border'), rp: cell.classList.contains('rp-border') } });
   document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
   document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
-  document.querySelectorAll('.pitch-input').forEach(i => data.pitch.push(i.value));
-  localStorage.setItem('scoresheetV5_3', JSON.stringify(data));
+  document.querySelectorAll('#pitch1 input, #pitch2 input').forEach(i => data.pitch.push(i.value));
+  localStorage.setItem('scoresheetV5_4', JSON.stringify(data));
 }
-
 function loadData(){
-  const saved = JSON.parse(localStorage.getItem('scoresheetV5_3') || '{}');
+  const saved = JSON.parse(localStorage.getItem('scoresheetV5_4') || '{}');
   if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
   const applyData = (cells, savedList) => {
     if(!savedList) return;
@@ -307,18 +261,12 @@ function loadData(){
         item.v.forEach((val, idx) => { if(inputs[idx]) inputs[idx].value = val; });
         if(item.b?.ph) cell.classList.add('ph-border');
         if(item.b?.rp) cell.classList.add('rp-border');
-        if(item.d) {
-            cellDrawings.set(cell, item.d);
-            let mini = document.createElement('canvas'); mini.className = 'mini-canvas'; cell.appendChild(mini);
-            mini.width = 44; mini.height = 48;
-            const mCtx = mini.getContext('2d');
-            const img = new Image(); img.onload = function() { mCtx.drawImage(this, 0, 0, 44, 48); }; img.src = item.d;
-        }
+        if(item.d) { cellDrawings.set(cell, item.d); let mini = document.createElement('canvas'); mini.className = 'mini-canvas'; cell.appendChild(mini); mini.width = 44; mini.height = 48; const mCtx = mini.getContext('2d'); const img = new Image(); img.onload = function() { mCtx.drawImage(this, 0, 0, 44, 48); }; img.src = item.d; }
     });
   };
   applyData(document.querySelectorAll('#grid1 .cell'), saved.grid1);
   applyData(document.querySelectorAll('#grid2 .cell'), saved.grid2);
-  const pInputs = document.querySelectorAll('.pitch-input');
+  const pInputs = document.querySelectorAll('#pitch1 input, #pitch2 input');
   saved.pitch?.forEach((val, i) => { if(pInputs[i]) pInputs[i].value = val; });
 }
 
