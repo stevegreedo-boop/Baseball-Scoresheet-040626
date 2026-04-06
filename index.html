@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V5.1</title>
+<title>BASEBALL SCORESHEET - V5.2</title>
 <style>
 #version-stamp {
-    background: #000; color: #ff0000; padding: 8px 15px; 
+    background: #000; color: #00ffff; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin-bottom: 15px; display: inline-block; font-weight: bold;
 }
@@ -15,7 +15,23 @@ body {
     background-color: #e8e4da;
     background-image: url('https://www.photos-public-domain.com/wp-content/uploads/2012/05/white-paper-texture.jpg');
     background-size: cover; padding: 20px; font-family: Arial, sans-serif;
-    touch-action: manipulation; min-width: 800px; /* Prevents squishing in Portrait */
+    touch-action: manipulation; min-width: 800px;
+}
+
+/* THE BRUTE FORCE ALIGNMENT */
+input {
+    text-align: center !important;
+    justify-content: center !important;
+    display: flex !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+}
+
+/* Target specific Inning and Pitching inputs */
+.inning-input, .pitch-input, .team-header-input {
+    text-align: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 .grid {
@@ -31,15 +47,7 @@ body {
 
 .cell-input {
     border: none; outline: none; background: transparent; text-transform: uppercase;
-    width: 100%; height: 50%; text-align: center !important; font-size: 12px;
-}
-
-/* FORCE CENTER ALIGNMENT FOR TOP ROW */
-.team-header-input, .inning-input {
-    text-align: center !important;
-    justify-content: center !important;
-    display: flex !important;
-    appearance: none; -webkit-appearance: none;
+    width: 100%; height: 50%; font-size: 12px;
 }
 
 .team-header-input { height: 100% !important; font-size: 18px !important; font-weight: bold !important; border:none; }
@@ -54,20 +62,18 @@ body {
 
 .mini-canvas { position: absolute; right: 0; top: 0; width: 44px !important; height: 48px !important; pointer-events: none; z-index: 10; }
 
-/* FIXED WIDTH PITCHING TABLES */
-.pitching-section { display: flex; gap: 20px; margin-top: 30px; width: 755px; }
-.pitching-table { border-collapse: collapse; background: white; font-size: 12px; width: 367px; table-layout: fixed; }
-.pitching-table th, .pitching-table td { border: 1px solid #333; height: 30px; padding: 0; }
+/* PITCHING TABLE - RIGID PIXELS */
+.pitching-section { display: flex; gap: 15px; margin-top: 30px; width: 755px; }
+.pitching-table { border-collapse: collapse; background: white; font-size: 12px; width: 370px !important; table-layout: fixed; }
+.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; overflow: hidden; }
 .pitching-table th { background: #f2f2f2; text-align: center !important; }
 
 .pitch-input { 
     width: 100%; height: 100%; border: none; outline: none; background: transparent; 
-    text-align: center !important; text-transform: uppercase; font-size: 14px;
-    appearance: none; -webkit-appearance: none;
+    font-size: 14px; text-transform: uppercase;
 }
-.pitch-name-input { text-align: left !important; padding-left: 6px !important; font-weight: bold; width: 120px; }
 
-/* BUTTONS & POPUPS */
+/* POPUPS */
 #drawing-popup { 
     display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
     background: white; border: 4px solid black; padding: 20px; z-index: 1000; box-shadow: 0 0 80px rgba(0,0,0,0.8);
@@ -87,7 +93,7 @@ body {
 </head>
 <body>
 
-<div id="version-stamp">LOADED VERSION: 5.1 (Fixed Alignments & Large Canvas)</div>
+<div id="version-stamp">LOADED VERSION: 5.2 (Pitching Overhaul)</div>
 
 <div class="grid" id="grid1"></div>
 <div class="grid" id="grid2"></div>
@@ -97,22 +103,22 @@ body {
         <tr><th colspan="10" id="team1-label" style="font-size:15px; height:35px;">VISITOR</th></tr>
         <tr>
             <th style="width:25px">T</th>
-            <th style="width:120px; text-align:left !important; padding-left:5px;">NAME</th>
+            <th style="width:130px">NAME</th>
             <th style="width:35px">DEC</th>
-            <th style="width:42px">IP</th>
-            <th style="width:22px">H</th><th style="width:22px">R</th><th style="width:22px">ER</th>
-            <th style="width:22px">K</th><th style="width:22px">BB</th><th style="width:22px">HR</th>
+            <th style="width:40px">IP</th>
+            <th style="width:20px">H</th><th style="width:20px">R</th><th style="width:20px">ER</th>
+            <th style="width:20px">K</th><th style="width:20px">BB</th><th style="width:20px">HR</th>
         </tr>
     </table>
     <table class="pitching-table" id="pitch2">
         <tr><th colspan="10" id="team2-label" style="font-size:15px; height:35px;">HOME</th></tr>
         <tr>
             <th style="width:25px">T</th>
-            <th style="width:120px; text-align:left !important; padding-left:5px;">NAME</th>
+            <th style="width:130px">NAME</th>
             <th style="width:35px">DEC</th>
-            <th style="width:42px">IP</th>
-            <th style="width:22px">H</th><th style="width:22px">R</th><th style="width:22px">ER</th>
-            <th style="width:22px">K</th><th style="width:22px">BB</th><th style="width:22px">HR</th>
+            <th style="width:40px">IP</th>
+            <th style="width:20px">H</th><th style="width:20px">R</th><th style="width:20px">ER</th>
+            <th style="width:20px">K</th><th style="width:20px">BB</th><th style="width:20px">HR</th>
         </tr>
     </table>
 </div>
@@ -216,7 +222,6 @@ function createPitchingTable(tableId) {
             const td = document.createElement('td');
             const input = document.createElement('input');
             input.classList.add('pitch-input');
-            if(col === 'name') input.classList.add('pitch-name-input');
             if(numCols.includes(col)) { input.setAttribute('inputmode', 'decimal'); input.setAttribute('type', 'text'); }
             if(col === 'ip') { input.onblur = () => { let val = input.value; if(val && !isNaN(val) && !val.includes('.')) input.value = val + ".0"; saveData(); }; }
             input.oninput = saveData; td.appendChild(input); tr.appendChild(td);
@@ -279,11 +284,11 @@ function saveData(){
   document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
   document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
   document.querySelectorAll('.pitch-input').forEach(i => data.pitch.push(i.value));
-  localStorage.setItem('scoresheetV5_1', JSON.stringify(data));
+  localStorage.setItem('scoresheetV5_2', JSON.stringify(data));
 }
 
 function loadData(){
-  const saved = JSON.parse(localStorage.getItem('scoresheetV5_1') || '{}');
+  const saved = JSON.parse(localStorage.getItem('scoresheetV5_2') || '{}');
   if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
   const applyData = (cells, savedList) => {
     if(!savedList) return;
