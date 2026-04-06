@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BASEBALL SCORESHEET - V4.7</title>
+<style>
+body {
+    background-color: #e8e4da;
+    background-image: url('https://www.photos-public-domain.com/wp-content/uploads/2012/05/white-paper-texture.jpg');
+    background-size: cover; padding: 20px; font-family: Arial, sans-serif;
+}
+
+.grid {
+    display: grid; grid-template-columns: 32px 32px 150px repeat(12, 44px);
+    grid-template-rows: repeat(13, 48px); gap: 4px; width: 755px; margin-bottom: 50px;
+}
+
+.cell {
+    background: white; border: 1px solid #ccc; display: flex; flex-direction: column;
+    justify-content: center; align-items: stretch; cursor: pointer; position: relative;
+    overflow: hidden; box-sizing: border-box;
+}
+
+.cell.col-1, .cell.col-2 { width: 32px !important; }
+.cell.col-3 { width: 150px !important; }
+
+.cell-input {
+    border: none; outline: none; background: transparent; text-transform: uppercase;
+    width: 100%; height: 50%; text-align: center; font-size: 12px; box-sizing: border-box;
+}
+
+.cell.col-3 input { text-align: left; padding-left: 5px; font-size: 14px; }
+.cell.col-1 input:first-child, .cell.col-2 input:first-child, .cell.col-3 input:first-child {
+    border-bottom: 1px solid #ddd !important;
+}
+
+.team-header-input {
+    height: 100% !important; font-size: 18px !important; font-weight: bold !important;
+    text-align: center !important; border-bottom: none !important;
+}
+
+.inning-input {
+    width: 100%; height: 100%; border: none; outline: none; background: transparent;
+    text-align: center; font-weight: bold; font-size: 18px;
+}
+
+.diagonal-slash { background-color: #f0f0f0 !important; }
+.diagonal-slash::after {
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, transparent 48%, #444 49%, #444 51%, transparent 52%);
+    pointer-events: none; z-index: 1;
+}
+
+.mini-canvas { 
+    position: absolute; right: 0; top: 0; 
+    width: 44px !important; height: 48px !important; 
+    pointer-events: none; z-index: 10; 
+}
+
+.pitching-section { display: flex; gap: 30px; margin-top: 30px; }
+.pitching-table { border-collapse: collapse; background: white; font-size: 13px; width: 490px; }
+.pitching-table th { background: #f2f2f2; border: 1px solid #333; padding: 5px; }
+.pitching-table td { border: 1px solid #333; padding: 4px; }
+.pitch-input { width: 100%; border: none; outline: none; background: transparent; text-align: center; text-transform: uppercase; }
+.pitch-name-input { text-align: left !important; padding-left: 5px; }
+
+.ph-border { border-left: 6px solid black !important; }
+.rp-border { border-top: 6px solid black !important; }
+.cell.row-1.col-1, .cell.row-1.col-2 { visibility: hidden; }
+
+#position-popup { display: none; position: fixed; background: white; border: 2px solid black; z-index: 2000; padding: 5px; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+#drawing-popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid black; padding: 10px; z-index: 1000; }
+#drawing-popup canvas { border: 1px solid #000; background: #fff; }
+</style>
+</head>
+<body>
+
+<div class="grid" id="grid1"></div>
+<div class="grid" id="grid2"></div>
+
+<div class="pitching-section">
+    <table class="pitching-table" id="pitch1">
+        <tr><th colspan="10" id="team1-label">VISITOR</th></tr>
+        <tr><th style="width:30px">T</th><th style="width:180px; text-align:left;">NAME</th><th style="width:40px">DEC</th><th style="width:45px">IP</th><th style="width:30px">H</th><th style="width:30px">R</th><th style="width:30px">ER</th><th style="width:30px">K</th><th style="width:30px">BB</th><th style="width:30px">HR</th></tr>
+    </table>
+    <table class="pitching-table" id="pitch2">
+        <tr><th colspan="10" id="team2-label">HOME</th></tr>
+        <tr><th style="width:30px">T</th><th style="width:180px; text-align:left;">NAME</th><th style="width:40px">DEC</th><th style="width:45px">IP</th><th style="width:30px">H</th><th style="width:30px">R</th><th style="width:30px">ER</th><th style="width:30px">K</th><th style="width:30px">BB</th><th style="width:30px">HR</th></tr>
+    </table>
+</div>
+
+<div style="margin-top: 20px; display: flex; gap: 10px; align-items: center;">
+    <button id="clear-all-btn" style="background: #cc0000; color: white; width: 120px; border:none; height:40px; cursor:pointer; font-weight:bold;">CLEAR ALL</button>
+    <input type="text" id="bg-url" placeholder="Paste Background URL" style="width: 300px; padding: 8px;">
+    <button id="update-bg" style="padding: 8px; cursor: pointer;">Update BG</button>
+</div>
+
+<div id="drawing-popup">
+  <canvas id="popup-canvas" width="300" height="300"></canvas>
+  <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+    <div style="display:flex; gap:5px;">
+      <button id="black-btn" style="background:black; color:white; padding:8px; cursor:pointer;">BLACK</button>
+      <button id="red-btn" style="background:red; color:white; padding:8px; cursor:pointer;">RED</button>
+      <button id="end-btn" style="background:darkgray; color:white; padding:8px; cursor:pointer;">END</button>
+      <button id="ph-btn" style="padding:8px; cursor:pointer;">PH</button>
+      <button id="rp-btn" style="padding:8px; cursor:pointer;">RP</button>
+    </div>
+    <div style="display:flex; gap:5px;">
+        <button id="clear-btn" style="background:orange; color:white; padding:8px; cursor:pointer;">CLEAR</button>
+        <button id="ok-btn" style="background:green; color:white; flex-grow:1; padding:8px; cursor:pointer;">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="position-popup"></div>
+
+<script>
+const positions = ["CA","1B","2B","3B","SS","LF","CF","RF","DH","PH"," "];
+const cellDrawings = new Map();
+let currentCell = null;
+let brushColor = 'black', drawing = false, lastX=0, lastY=0;
+
+const canvas = document.getElementById('popup-canvas');
+const ctx = canvas.getContext('2d');
+
+function refreshPopup() {
+    ctx.clearRect(0,0,300,300);
+    
+    // Virtual Row 13 Guideline
+    if (currentCell && currentCell.classList.contains('diagonal-slash')) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(300, 0); ctx.stroke();
+        ctx.restore();
+    }
+
+    const savedData = cellDrawings.get(currentCell);
+    if(savedData){
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, 300, 300);
+        img.src = savedData;
+    }
+}
+
+function createGrid(gridElement){
+  for(let r=1;r<=13;r++){
+    for(let c=1;c<=15;c++){
+      const cell = document.createElement('div');
+      cell.classList.add('cell', `row-${r}`, `col-${c}`);
+      if(r===13 && c>=4) cell.classList.add('diagonal-slash');
+
+      if(r===1 && c>=3){
+        const inp = document.createElement('input'); 
+        inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
+        if(c>3 && c<=12) inp.value = c-3;
+        if(c===3) {
+            inp.placeholder = "TEAM";
+            inp.oninput = () => {
+                const label = document.getElementById(gridElement.id === 'grid1' ? 'team1-label' : 'team2-label');
+                label.textContent = inp.value.toUpperCase() || (gridElement.id === 'grid1' ? "VISITOR" : "HOME");
+                saveData();
+            };
+        } else { inp.oninput = saveData; }
+        cell.appendChild(inp);
+      }
+      else if((c===1 || c===2 || c===3) && r!==1){
+        const t = document.createElement('input'); t.classList.add('cell-input');
+        const b = document.createElement('input'); b.classList.add('cell-input');
+        t.oninput = saveData; b.oninput = saveData;
+        if(c===1) {
+            [t, b].forEach(inp => {
+                inp.readOnly = true; inp.onclick = (e) => {
+                    e.stopPropagation(); const p = document.getElementById('position-popup');
+                    p.style.display = 'grid'; p.style.top = e.clientY + 'px'; p.style.left = e.clientX + 'px';
+                    p.innerHTML = ''; positions.forEach(pos => {
+                        const btn = document.createElement('button'); btn.textContent = pos;
+                        btn.onclick = () => { inp.value = pos; p.style.display='none'; saveData(); };
+                        p.appendChild(btn);
+                    });
+                };
+            });
+        }
+        cell.appendChild(t); cell.appendChild(b);
+      }
+
+      if(c>2 && !(r===1 && c>=3)){
+        cell.onclick = () => {
+          currentCell = cell; 
+          document.getElementById('drawing-popup').style.display='block';
+          brushColor='black'; refreshPopup();
+        };
+      }
+      gridElement.appendChild(cell);
+    }
+  }
+}
+
+function createPitchingTable(tableId) {
+    const table = document.getElementById(tableId);
+    for(let i=0; i<8; i++) {
+        const tr = document.createElement('tr');
+        ['t','name','dec','ip','h','r','er','k','bb','hr'].forEach(col => {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.classList.add('pitch-input');
+            if(col === 'name') input.classList.add('pitch-name-input');
+            if(col === 'ip') {
+                input.onblur = () => {
+                    let val = input.value;
+                    if(val && !isNaN(val) && !val.includes('.')) input.value = val + ".0";
+                    saveData();
+                };
+            }
+            input.oninput = saveData; td.appendChild(input); tr.appendChild(td);
+        });
+        table.appendChild(tr);
+    }
+}
+
+const getCoords = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return [cx - rect.left, cy - rect.top];
+};
+
+canvas.onmousedown = (e) => { drawing=true; [lastX, lastY] = getCoords(e); };
+canvas.onmousemove = (e) => { 
+    if(!drawing) return; const [x,y]=getCoords(e); 
+    ctx.strokeStyle=brushColor; ctx.lineWidth=20; ctx.lineCap='round'; 
+    ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(x,y); ctx.stroke(); 
+    [lastX,lastY]=[x,y]; 
+};
+window.onmouseup = () => drawing = false;
+
+document.getElementById('black-btn').onclick = () => brushColor='black';
+document.getElementById('red-btn').onclick = () => brushColor='red';
+document.getElementById('clear-btn').onclick = () => { cellDrawings.delete(currentCell); refreshPopup(); };
+document.getElementById('ph-btn').onclick = () => { currentCell.classList.toggle('ph-border'); saveData(); };
+document.getElementById('rp-btn').onclick = () => { currentCell.classList.toggle('rp-border'); saveData(); };
+
+document.getElementById('end-btn').onclick = () => {
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(300,300); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(300,0); ctx.lineTo(0,300); ctx.stroke();
+};
+
+document.getElementById('ok-btn').onclick = () => {
+    if(!currentCell) return;
+    
+    // TEMPORARY CANVAS to strip virtual guideline
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 300; tempCanvas.height = 300;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    // Draw only the user content
+    const savedContent = cellDrawings.get(currentCell);
+    if(savedContent) {
+        const img = new Image();
+        img.onload = () => {
+           tempCtx.drawImage(img, 0, 0);
+           // Apply manual strokes from current canvas session if any
+           // For simplicity, we capture the whole 300x300 now:
+           const finalData = canvas.toDataURL();
+           finishSave(finalData);
+        }
+        img.src = savedContent;
+    } 
+    finishSave(canvas.toDataURL());
+};
+
+function finishSave(dataUrl) {
+    cellDrawings.set(currentCell, dataUrl);
+    let mini = currentCell.querySelector('.mini-canvas');
+    if(!mini) {
+        mini = document.createElement('canvas');
+        mini.className = 'mini-canvas';
+        currentCell.appendChild(mini);
+    }
+    mini.width = 44; mini.height = 48;
+    const mCtx = mini.getContext('2d');
+    
+    // QUALITY FIX: Enable Smoothing
+    mCtx.imageSmoothingEnabled = true;
+    mCtx.imageSmoothingQuality = 'high';
+    
+    const img = new Image();
+    img.src = dataUrl;
+    img.onload = () => {
+        mCtx.clearRect(0,0,44,48);
+        mCtx.drawImage(img, 0, 0, 44, 48);
+        saveData();
+    };
+    document.getElementById('drawing-popup').style.display = 'none';
+}
+
+document.getElementById('clear-all-btn').onclick = () => { if(confirm("Wipe sheet?")) { localStorage.clear(); location.reload(); } };
+document.getElementById('update-bg').onclick = () => { document.body.style.backgroundImage = `url('${document.getElementById('bg-url').value}')`; saveData(); };
+
+function saveData(){
+  const data = { grid1: [], grid2: [], pitch: [], bg: document.getElementById('bg-url').value };
+  const getCellData = (cell) => ({
+      v: [...cell.querySelectorAll('input')].map(inp=>inp.value),
+      d: cellDrawings.get(cell) || null,
+      b: { ph: cell.classList.contains('ph-border'), rp: cell.classList.contains('rp-border') }
+  });
+  document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
+  document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
+  document.querySelectorAll('.pitch-input').forEach(i => data.pitch.push(i.value));
+  localStorage.setItem('scoresheetV4_7', JSON.stringify(data));
+}
+
+function loadData(){
+  const saved = JSON.parse(localStorage.getItem('scoresheetV4_7') || '{}');
+  if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
+  const applyData = (cells, savedList) => {
+    if(!savedList) return;
+    cells.forEach((cell, i) => {
+        const item = savedList[i]; if(!item) return;
+        const inputs = cell.querySelectorAll('input');
+        item.v.forEach((val, idx) => { if(inputs[idx]) inputs[idx].value = val; });
+        if(item.b?.ph) cell.classList.add('ph-border');
+        if(item.b?.rp) cell.classList.add('rp-border');
+        if(item.d) {
+            cellDrawings.set(cell, item.d);
+            let mini = document.createElement('canvas'); mini.className = 'mini-canvas'; cell.appendChild(mini);
+            mini.width = 44; mini.height = 48;
+            const mCtx = mini.getContext('2d');
+            mCtx.imageSmoothingEnabled = true; mCtx.imageSmoothingQuality = 'high';
+            const img = new Image(); img.onload = function() { mCtx.drawImage(this, 0, 0, 44, 48); };
+            img.src = item.d;
+        }
+    });
+  };
+  applyData(document.querySelectorAll('#grid1 .cell'), saved.grid1);
+  applyData(document.querySelectorAll('#grid2 .cell'), saved.grid2);
+  const pInputs = document.querySelectorAll('.pitch-input');
+  saved.pitch?.forEach((val, i) => { if(pInputs[i]) pInputs[i].value = val; });
+}
+
+createGrid(document.getElementById('grid1'));
+createGrid(document.getElementById('grid2'));
+createPitchingTable('pitch1');
+createPitchingTable('pitch2');
+loadData();
+</script>
+</body>
+</html>
