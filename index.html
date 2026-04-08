@@ -13,27 +13,26 @@
 
 /* ... existing styles ... */
 
-/* TEAM NAME - V6.6 ISOLATED CENTERING */
+
+    
+/* TEAM NAME - V6.6 CLEAN CENTERING */
 .team-header-input { 
     text-align: center !important; 
-    font-size: 20px !important; /* Slightly larger to fill the space */
+    font-size: 18px !important; 
     font-weight: bold !important; 
     text-transform: uppercase !important;
     width: 100% !important;
-    height: 100% !important;
+    /* Resetting to basic blocks to remove the "ghost boxes" */
     display: block !important;
-    -webkit-appearance: none !important;
-}
-
-/* Force centering for the specific cell container */
-.team-name-cell {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
+    -webkit-appearance: none;
     padding: 0 !important;
 }
 
-.team-header-input::-webkit-input-placeholder { text-align: center !important; }
+/* Ensure hidden cells stay hidden */
+.hidden-cell { visibility: hidden !important; display: none !important; }
+
+
+    
 
 /* Applying a secondary hammer to the row/col specifically */
 .row-1.col-3 {
@@ -166,21 +165,31 @@ function createGrid(gridElement){
       
       if(r===1 && c<3) {
           cell.classList.add('hidden-cell');
-} else if(r===1 && c>=3){
-  if(c===3) cell.classList.add('team-name-cell'); // The new anchor point
+
+
+
+          } else if(r===1 && c>=3){
   const inp = document.createElement('input'); 
   inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
-        if(c>3 && c<=12) inp.value = c-3;
-        if(c===3) {
-            inp.placeholder = "TEAM";
-            inp.oninput = () => {
-                const label = document.getElementById(gridElement.id === 'grid1' ? 'team1-label' : 'team2-label');
-                label.textContent = inp.value.toUpperCase() || (gridElement.id === 'grid1' ? "VISITOR" : "HOME");
-                saveData();
-            };
-        }
-        cell.appendChild(inp);
-      }
+  
+  if(c>3 && c<=12) inp.value = c-3;
+  if(c===3) {
+      inp.placeholder = "TEAM";
+      // Force Safari to recalculate alignment on every keystroke
+      inp.oninput = () => {
+          const label = document.getElementById(gridElement.id === 'grid1' ? 'team1-label' : 'team2-label');
+          label.textContent = inp.value.toUpperCase() || (gridElement.id === 'grid1' ? "VISITOR" : "HOME");
+          saveData();
+      };
+      // TRICK: Force a redraw when the user finishes typing
+      inp.onblur = () => { inp.style.display = 'none'; inp.offsetHeight; inp.style.display = 'block'; };
+  }
+  cell.appendChild(inp);
+}
+
+
+
+          
       else if((c===1 || c===2 || c===3) && r!==1){
         const t = document.createElement('input'); t.classList.add('dual-input', 'border-mid');
         const b = document.createElement('input'); b.classList.add('dual-input');
