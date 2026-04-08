@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V5.8</title>
+<title>BASEBALL SCORESHEET - V5.9</title>
 <style>
 #version-stamp {
-    background: #000; color: #ffff00; padding: 8px 15px; 
+    background: #000; color: #00ffaa; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin: 10px; display: inline-block; font-weight: bold;
 }
@@ -15,34 +15,32 @@ body {
     background-color: #e8e4da;
     background-image: url('https://www.photos-public-domain.com/wp-content/uploads/2012/05/white-paper-texture.jpg');
     background-size: cover; margin: 0; padding: 10px; font-family: Arial, sans-serif;
-    touch-action: auto; /* Re-enabling scroll for the experiment */
 }
 
-/* THE SPLIT CONTAINERS */
 .scroll-container {
-    width: 100%;
-    overflow-x: auto;
-    border: 2px solid #666;
-    background: rgba(255,255,255,0.3);
-    margin-bottom: 20px;
-    padding: 15px;
-    box-sizing: border-box;
-    -webkit-overflow-scrolling: touch; /* Smooth scroll for Safari */
+    width: 100%; overflow-x: auto; border: 2px solid #666;
+    background: rgba(255,255,255,0.3); margin-bottom: 20px;
+    padding: 15px; box-sizing: border-box; -webkit-overflow-scrolling: touch;
 }
 
 input {
-    text-align: center !important;
-    border: none; outline: none; background: transparent;
+    text-align: center !important; border: none; outline: none; background: transparent;
     width: 100%; height: 100%; padding: 0 !important; margin: 0 !important;
-    display: block !important;
-    -webkit-appearance: none; border-radius: 0;
+    display: block !important; -webkit-appearance: none; border-radius: 0;
 }
 
-/* TEAM & BATTING NAME FIXES */
-.team-header-input { text-align: center !important; font-size: 18px !important; font-weight: bold !important; text-transform: uppercase; }
+/* TEAM NAME CENTERING - Hard Override */
+.team-header-input { 
+    text-align: center !important; 
+    font-size: 18px !important; 
+    font-weight: bold !important; 
+    text-transform: uppercase !important;
+}
+
 .col-3 input { text-align: left !important; padding-left: 5px !important; }
 .inning-input { font-weight: bold; font-size: 18px; text-align: center !important;}
 
+/* BATTING GRID */
 .grid {
     display: grid; grid-template-columns: 32px 32px 150px repeat(12, 44px);
     grid-template-rows: repeat(13, 48px); gap: 4px; width: 755px; margin-bottom: 40px;
@@ -58,27 +56,30 @@ input {
 .border-mid { border-bottom: 1px solid #bbb !important; }
 .hidden-cell { visibility: hidden !important; border: none !important; }
 
-.diagonal-slash { background-color: #f0f0f0 !important; }
-.diagonal-slash::after {
+/* ROW 13 SLASH REPAIRED */
+.diagonal-slash { background-color: #f8f8f8 !important; position: relative; }
+.diagonal-slash::before {
     content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(135deg, transparent 48%, #444 49%, #444 51%, transparent 52%);
+    background: linear-gradient(135deg, transparent 49%, #bbb 50%, transparent 51%);
     pointer-events: none; z-index: 1;
 }
 
 .mini-canvas { position: absolute; right: 0; top: 0; width: 44px !important; height: 48px !important; pointer-events: none; z-index: 10; }
 
-/* PITCHING EXPERIMENT - BRUTE FORCE WIDTHS */
-.pitching-section { display: flex; gap: 30px; width: 1000px; } /* Set a wide width to force horizontal scroll if needed */
-.pitching-table { border-collapse: collapse; background: white; font-size: 13px; table-layout: fixed; width: 480px !important; }
-.pitching-table th, .pitching-table td { border: 1px solid #333; height: 35px; padding: 0; margin: 0; }
+/* PITCHING GRID (Replacing Table) */
+.pitching-wrapper { display: flex; gap: 40px; width: fit-content; }
+.p-grid {
+    display: grid;
+    /* Rigid Widths: T, Name, Dec, IP, H, R, ER, K, BB, HR */
+    grid-template-columns: 30px 180px 45px 55px repeat(6, 30px);
+    background: #333; border: 2px solid #333; width: fit-content;
+}
 
-.p-t { width: 30px; }
-.p-name { width: 180px; } /* MANUALLY EXPANDED FOR EXPERIMENT */
-.p-dec { width: 45px; }
-.p-ip { width: 55px; }
-.p-stat { width: 28px; }
+.p-header-main { grid-column: span 10; background: #ddd; height: 40px; font-weight: bold; font-size: 16px; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: center;}
+.p-label { background: #eee; font-weight: bold; font-size: 12px; border: 1px solid #333; display: flex; align-items: center; justify-content: center; height: 30px;}
+.p-input-cell { background: white; border: 1px solid #333; height: 35px; }
 
-.pitch-input-name { text-align: left !important; padding-left: 6px !important; font-weight: bold; }
+.p-name-input { text-align: left !important; padding-left: 8px !important; font-weight: bold; }
 
 /* POPUPS */
 #drawing-popup { 
@@ -95,7 +96,7 @@ input {
 </head>
 <body>
 
-<div id="version-stamp">V5.8 - DUAL SCROLL EXPERIMENT</div>
+<div id="version-stamp">V5.9 - RIGID GRID PITCHING</div>
 
 <div class="scroll-container">
     <div class="grid" id="grid1"></div>
@@ -103,21 +104,17 @@ input {
 </div>
 
 <div class="scroll-container">
-    <div class="pitching-section">
-        <table class="pitching-table" id="pitch1">
-            <tr><th colspan="10" id="team1-label" style="font-size:16px; height:40px; background:#ddd;">VISITOR</th></tr>
-            <tr style="height:30px;">
-                <th class="p-t">T</th><th class="p-name">NAME</th><th class="p-dec">DEC</th><th class="p-ip">IP</th>
-                <th class="p-stat">H</th><th class="p-stat">R</th><th class="p-stat">ER</th><th class="p-stat">K</th><th class="p-stat">BB</th><th class="p-stat">HR</th>
-            </tr>
-        </table>
-        <table class="pitching-table" id="pitch2">
-            <tr><th colspan="10" id="team2-label" style="font-size:16px; height:40px; background:#ddd;">HOME</th></tr>
-            <tr style="height:30px;">
-                <th class="p-t">T</th><th class="p-name">NAME</th><th class="p-dec">DEC</th><th class="p-ip">IP</th>
-                <th class="p-stat">H</th><th class="p-stat">R</th><th class="p-stat">ER</th><th class="p-stat">K</th><th class="p-stat">BB</th><th class="p-stat">HR</th>
-            </tr>
-        </table>
+    <div class="pitching-wrapper">
+        <div class="p-grid" id="p-grid1">
+            <div class="p-header-main" id="team1-label">VISITOR</div>
+            <div class="p-label">T</div><div class="p-label">NAME</div><div class="p-label">DEC</div><div class="p-label">IP</div>
+            <div class="p-label">H</div><div class="p-label">R</div><div class="p-label">ER</div><div class="p-label">K</div><div class="p-label">BB</div><div class="p-label">HR</div>
+        </div>
+        <div class="p-grid" id="p-grid2">
+            <div class="p-header-main" id="team2-label">HOME</div>
+            <div class="p-label">T</div><div class="p-label">NAME</div><div class="p-label">DEC</div><div class="p-label">IP</div>
+            <div class="p-label">H</div><div class="p-label">R</div><div class="p-label">ER</div><div class="p-label">K</div><div class="p-label">BB</div><div class="p-label">HR</div>
+        </div>
     </div>
 </div>
 
@@ -207,23 +204,20 @@ function createGrid(gridElement){
   }
 }
 
-function createPitchingTable(tableId) {
-    const table = document.getElementById(tableId);
-    const classes = ['p-t','p-name','p-dec','p-ip','p-stat','p-stat','p-stat','p-stat','p-stat','p-stat'];
+function createPitchingGrid(containerId) {
+    const grid = document.getElementById(containerId);
     for(let i=0; i<8; i++) {
-        const tr = document.createElement('tr');
         for(let j=0; j<10; j++) {
-            const td = document.createElement('td');
-            td.className = classes[j];
+            const div = document.createElement('div');
+            div.className = 'p-input-cell';
             const input = document.createElement('input');
-            if(j === 1) input.classList.add('pitch-input-name');
+            if(j === 1) input.classList.add('p-name-input');
             if(j >= 3) input.setAttribute('inputmode', 'decimal'); 
             if(j === 3) {
                 input.onblur = () => { let val = input.value; if(val && !isNaN(val) && !val.includes('.')) input.value = val + ".0"; saveData(); };
             }
-            input.oninput = saveData; td.appendChild(input); tr.appendChild(td);
+            input.oninput = saveData; div.appendChild(input); grid.appendChild(div);
         }
-        table.appendChild(tr);
     }
 }
 
@@ -252,11 +246,11 @@ function saveData(){
   const getCellData = (cell) => ({ v: [...cell.querySelectorAll('input')].map(inp=>inp.value), d: cellDrawings.get(cell) || null, b: { ph: cell.classList.contains('ph-border'), rp: cell.classList.contains('rp-border') } });
   document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
   document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
-  document.querySelectorAll('#pitch1 input, #pitch2 input').forEach(i => data.pitch.push(i.value));
-  localStorage.setItem('scoresheetV5_8', JSON.stringify(data));
+  document.querySelectorAll('.p-input-cell input').forEach(i => data.pitch.push(i.value));
+  localStorage.setItem('scoresheetV5_9', JSON.stringify(data));
 }
 function loadData(){
-  const saved = JSON.parse(localStorage.getItem('scoresheetV5_8') || '{}');
+  const saved = JSON.parse(localStorage.getItem('scoresheetV5_9') || '{}');
   if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
   const applyData = (cells, savedList) => {
     if(!savedList) return;
@@ -271,12 +265,12 @@ function loadData(){
   };
   applyData(document.querySelectorAll('#grid1 .cell'), saved.grid1);
   applyData(document.querySelectorAll('#grid2 .cell'), saved.grid2);
-  const pInputs = document.querySelectorAll('#pitch1 input, #pitch2 input');
+  const pInputs = document.querySelectorAll('.p-input-cell input');
   saved.pitch?.forEach((val, i) => { if(pInputs[i]) pInputs[i].value = val; });
 }
 
 createGrid(document.getElementById('grid1')); createGrid(document.getElementById('grid2'));
-createPitchingTable('pitch1'); createPitchingTable('pitch2'); loadData();
+createPitchingGrid('p-grid1'); createPitchingGrid('p-grid2'); loadData();
 </script>
 </body>
 </html>
