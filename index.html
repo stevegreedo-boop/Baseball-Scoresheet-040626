@@ -13,34 +13,26 @@
 
 /* ... existing styles ... */
 
-/* TEAM NAME - V6.5 NUCLEAR CENTERING */
+/* TEAM NAME - V6.6 ISOLATED CENTERING */
 .team-header-input { 
     text-align: center !important; 
-    font-size: 18px !important; 
+    font-size: 20px !important; /* Slightly larger to fill the space */
     font-weight: bold !important; 
     text-transform: uppercase !important;
     width: 100% !important;
-    
-    /* TRICK A: Force Safari to ignore internal padding */
-    padding: 0 !important;
-    margin: 0 !important;
-    
-    /* TRICK B: The "Writing Mode" Reset */
+    height: 100% !important;
+    display: block !important;
     -webkit-appearance: none !important;
-    appearance: none !important;
-    
-    /* TRICK C: Negative Indent Force */
-    text-indent: 0 !important;
 }
 
-/* THE ULTIMATE OVERRIDE */
-.row-1.col-3 input {
-    display: table-cell !important;
-    vertical-align: middle !important;
-    text-align: center !important;
+/* Force centering for the specific cell container */
+.team-name-cell {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
 }
 
-/* Force the placeholder again just in case */
 .team-header-input::-webkit-input-placeholder { text-align: center !important; }
 
 /* Applying a secondary hammer to the row/col specifically */
@@ -174,9 +166,10 @@ function createGrid(gridElement){
       
       if(r===1 && c<3) {
           cell.classList.add('hidden-cell');
-      } else if(r===1 && c>=3){
-        const inp = document.createElement('input'); 
-        inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
+} else if(r===1 && c>=3){
+  if(c===3) cell.classList.add('team-name-cell'); // The new anchor point
+  const inp = document.createElement('input'); 
+  inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
         if(c>3 && c<=12) inp.value = c-3;
         if(c===3) {
             inp.placeholder = "TEAM";
