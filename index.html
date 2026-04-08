@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V6.0</title>
+<title>BASEBALL SCORESHEET - V6.1</title>
 <style>
 #version-stamp {
-    background: #000; color: #ffcc00; padding: 8px 15px; 
+    background: #000; color: #ff5555; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin: 10px; display: inline-block; font-weight: bold;
 }
@@ -23,27 +23,28 @@ body {
     padding: 15px; box-sizing: border-box; -webkit-overflow-scrolling: touch;
 }
 
-/* BASE INPUT */
 input {
     text-align: center !important; border: none; outline: none; background: transparent;
     width: 100%; height: 100%; padding: 0 !important; margin: 0 !important;
     display: block !important; -webkit-appearance: none; border-radius: 0;
 }
 
-/* TEAM NAME - ABSOLUTE CENTERING */
-input.team-header-input { 
+/* TEAM NAME - FLEX CENTERING */
+.team-cell-wrapper {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100%; height: 100%;
+}
+.team-header-input { 
     text-align: center !important; 
     font-size: 18px !important; 
     font-weight: bold !important; 
     text-transform: uppercase !important;
     width: 100% !important;
-    display: block !important;
 }
 
-/* PLAYER NAMES - LEFT JUSTIFIED */
 .col-3 input { text-align: left !important; padding-left: 8px !important; }
-
-/* INNING NUMBERS */
 .inning-input { font-weight: bold; font-size: 18px; text-align: center !important;}
 
 /* BATTING GRID */
@@ -62,13 +63,8 @@ input.team-header-input {
 .border-mid { border-bottom: 1px solid #bbb !important; }
 .hidden-cell { visibility: hidden !important; border: none !important; }
 
-/* ROW 13 SLASH RE-ENGINEERED FOR STABILITY */
-.diagonal-slash { background-color: #f9f9f9 !important; }
-.slash-line {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(to top right, transparent 49.5%, #bbb 50%, transparent 50.5%);
-    pointer-events: none; z-index: 1;
-}
+/* ROW 13 SLASH BASE */
+.diagonal-slash { background-color: #f2f2f2 !important; }
 
 .mini-canvas { position: absolute; right: 0; top: 0; width: 44px !important; height: 48px !important; pointer-events: none; z-index: 10; }
 
@@ -100,7 +96,7 @@ input.team-header-input {
 </head>
 <body>
 
-<div id="version-stamp">V6.0 - TEAM & SLASH FIX</div>
+<div id="version-stamp">V6.1 - CANVAS SLASH RE-ENABLED</div>
 
 <div class="scroll-container">
     <div class="grid" id="grid1"></div>
@@ -164,17 +160,12 @@ function createGrid(gridElement){
       const cell = document.createElement('div');
       cell.classList.add('cell', `row-${r}`, `col-${c}`);
       
-      // GUIDELINE FIX: Add physical div for the slash
-      if(r===13 && c>=4) {
-          cell.classList.add('diagonal-slash');
-          const slash = document.createElement('div');
-          slash.className = 'slash-line';
-          cell.appendChild(slash);
-      }
-      
       if(r===1 && c<3) {
           cell.classList.add('hidden-cell');
       } else if(r===1 && c>=3){
+        // WRAPPER FOR CENTERING
+        const wrapper = document.createElement('div');
+        wrapper.className = 'team-cell-wrapper';
         const inp = document.createElement('input'); 
         inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
         if(c>3 && c<=12) inp.value = c-3;
@@ -186,7 +177,8 @@ function createGrid(gridElement){
                 saveData();
             };
         }
-        cell.appendChild(inp);
+        wrapper.appendChild(inp);
+        cell.appendChild(wrapper);
       }
       else if((c===1 || c===2 || c===3) && r!==1){
         const t = document.createElement('input'); t.classList.add('dual-input', 'border-mid');
@@ -207,6 +199,19 @@ function createGrid(gridElement){
         }
         cell.appendChild(t); cell.appendChild(b);
       }
+      
+      // ROW 13 CANVAS LOGIC
+      if(r===13 && c>=4) {
+          cell.classList.add('diagonal-slash');
+          const mini = document.createElement('canvas');
+          mini.className = 'mini-canvas';
+          mini.width = 44; mini.height = 48;
+          const mCtx = mini.getContext('2d');
+          mCtx.strokeStyle = '#bbb'; mCtx.lineWidth = 1;
+          mCtx.beginPath(); mCtx.moveTo(0, 48); mCtx.lineTo(44, 0); mCtx.stroke();
+          cell.appendChild(mini);
+      }
+
       if(c>2 && !(r===1 && c>=3)){
         cell.onclick = () => { currentCell = cell; document.getElementById('drawing-popup').style.display='block'; brushColor='black'; refreshPopup(); };
       }
@@ -232,7 +237,6 @@ function createPitchingGrid(containerId) {
     }
 }
 
-// Drawing Engine
 const getCoords = (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -246,11 +250,40 @@ canvas.addEventListener('touchstart', startDraw, {passive: false}); canvas.addEv
 
 document.getElementById('black-btn').onclick = () => brushColor='black';
 document.getElementById('red-btn').onclick = () => brushColor='red';
-document.getElementById('clear-btn').onclick = () => { cellDrawings.delete(currentCell); refreshPopup(); };
+document.getElementById('clear-btn').onclick = () => { 
+    cellDrawings.delete(currentCell); 
+    // If Row 13, restore the guideline after clear
+    if(currentCell.classList.contains('diagonal-slash')) {
+        let mini = currentCell.querySelector('.mini-canvas');
+        const mCtx = mini.getContext('2d');
+        mCtx.clearRect(0,0,44,48); mCtx.strokeStyle = '#bbb'; mCtx.lineWidth = 1;
+        mCtx.beginPath(); mCtx.moveTo(0, 48); mCtx.lineTo(44, 0); mCtx.stroke();
+    }
+    refreshPopup(); 
+};
 document.getElementById('ph-btn').onclick = (e) => { e.stopPropagation(); currentCell.classList.toggle('ph-border'); saveData(); };
 document.getElementById('rp-btn').onclick = (e) => { e.stopPropagation(); currentCell.classList.toggle('rp-border'); saveData(); };
 document.getElementById('end-btn').onclick = () => { ctx.strokeStyle = '#444'; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(400,400); ctx.stroke(); ctx.beginPath(); ctx.moveTo(400,0); ctx.lineTo(0,400); ctx.stroke(); };
-document.getElementById('ok-btn').onclick = () => { if(!currentCell) return; const finalData = canvas.toDataURL(); cellDrawings.set(currentCell, finalData); let mini = currentCell.querySelector('.mini-canvas') || document.createElement('canvas'); mini.className = 'mini-canvas'; currentCell.appendChild(mini); mini.width = 44; mini.height = 48; const mCtx = mini.getContext('2d'); const img = new Image(); img.onload = () => { mCtx.clearRect(0,0,44,48); mCtx.drawImage(img, 0, 0, 44, 48); saveData(); }; img.src = finalData; document.getElementById('drawing-popup').style.display = 'none'; };
+document.getElementById('ok-btn').onclick = () => { 
+    if(!currentCell) return; 
+    const finalData = canvas.toDataURL(); 
+    cellDrawings.set(currentCell, finalData); 
+    let mini = currentCell.querySelector('.mini-canvas') || document.createElement('canvas'); 
+    mini.className = 'mini-canvas'; currentCell.appendChild(mini); mini.width = 44; mini.height = 48; 
+    const mCtx = mini.getContext('2d'); 
+    const img = new Image(); 
+    img.onload = () => { 
+        mCtx.clearRect(0,0,44,48); 
+        // Re-draw guideline if row 13 before drawing user input
+        if(currentCell.classList.contains('diagonal-slash')) {
+            mCtx.strokeStyle = '#bbb'; mCtx.lineWidth = 1;
+            mCtx.beginPath(); mCtx.moveTo(0, 48); mCtx.lineTo(44, 0); mCtx.stroke();
+        }
+        mCtx.drawImage(img, 0, 0, 44, 48); 
+        saveData(); 
+    }; 
+    img.src = finalData; document.getElementById('drawing-popup').style.display = 'none'; 
+};
 document.getElementById('clear-all-btn').onclick = () => { if(confirm("Wipe sheet?")) { localStorage.clear(); location.reload(); } };
 document.getElementById('update-bg').onclick = () => { document.body.style.backgroundImage = `url('${document.getElementById('bg-url').value}')`; saveData(); };
 
@@ -260,10 +293,10 @@ function saveData(){
   document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
   document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
   document.querySelectorAll('.p-input-cell input').forEach(i => data.pitch.push(i.value));
-  localStorage.setItem('scoresheetV6_0', JSON.stringify(data));
+  localStorage.setItem('scoresheetV6_1', JSON.stringify(data));
 }
 function loadData(){
-  const saved = JSON.parse(localStorage.getItem('scoresheetV6_0') || '{}');
+  const saved = JSON.parse(localStorage.getItem('scoresheetV6_1') || '{}');
   if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
   const applyData = (cells, savedList) => {
     if(!savedList) return;
@@ -273,7 +306,22 @@ function loadData(){
         item.v.forEach((val, idx) => { if(inputs[idx]) inputs[idx].value = val; });
         if(item.b?.ph) cell.classList.add('ph-border');
         if(item.b?.rp) cell.classList.add('rp-border');
-        if(item.d) { cellDrawings.set(cell, item.d); let mini = document.createElement('canvas'); mini.className = 'mini-canvas'; cell.appendChild(mini); mini.width = 44; mini.height = 48; const mCtx = mini.getContext('2d'); const img = new Image(); img.onload = function() { mCtx.drawImage(this, 0, 0, 44, 48); }; img.src = item.d; }
+        if(item.d) { 
+            cellDrawings.set(cell, item.d); 
+            let mini = cell.querySelector('.mini-canvas') || document.createElement('canvas'); 
+            mini.className = 'mini-canvas'; cell.appendChild(mini); mini.width = 44; mini.height = 48; 
+            const mCtx = mini.getContext('2d'); 
+            const img = new Image(); 
+            img.onload = function() { 
+                mCtx.clearRect(0,0,44,48);
+                if(cell.classList.contains('diagonal-slash')) {
+                    mCtx.strokeStyle = '#bbb'; mCtx.lineWidth = 1;
+                    mCtx.beginPath(); mCtx.moveTo(0, 48); mCtx.lineTo(44, 0); mCtx.stroke();
+                }
+                mCtx.drawImage(this, 0, 0, 44, 48); 
+            }; 
+            img.src = item.d; 
+        }
     });
   };
   applyData(document.querySelectorAll('#grid1 .cell'), saved.grid1);
