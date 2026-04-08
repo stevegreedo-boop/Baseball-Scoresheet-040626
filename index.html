@@ -32,11 +32,14 @@ input {
 /* TEAM NAME - SIMPLIFIED CENTERING */
 .team-header-input { 
     text-align: center !important; 
+    text-align-last: center !important; /* The Safari "Hammer" */
     font-size: 18px !important; 
     font-weight: bold !important; 
     text-transform: uppercase !important;
-    width: 90% !important;
+    width: 100% !important;
     margin: 0 auto !important;
+    display: block !important;
+    -webkit-appearance: none;
 }
 
 .col-3 input { text-align: left !important; padding-left: 8px !important; }
