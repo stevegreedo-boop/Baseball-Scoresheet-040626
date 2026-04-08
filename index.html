@@ -3,46 +3,42 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V6.5</title>
+<title>BASEBALL SCORESHEET - V6.3</title>
 <style>
 #version-stamp {
-    background: #000; color: #ff8800; padding: 8px 15px; 
+    background: #000; color: #ff00ff; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin: 10px; display: inline-block; font-weight: bold;
 }
 
-/* ... existing styles ... */
+body {
+    background-color: #e8e4da;
+    background-image: url('https://www.photos-public-domain.com/wp-content/uploads/2012/05/white-paper-texture.jpg');
+    background-size: cover; margin: 0; padding: 10px; font-family: Arial, sans-serif;
+}
 
+.scroll-container {
+    width: 100%; overflow-x: auto; border: 2px solid #666;
+    background: rgba(255,255,255,0.3); margin-bottom: 20px;
+    padding: 15px; box-sizing: border-box; -webkit-overflow-scrolling: touch;
+}
 
-    
-/* TEAM NAME - V6.6 CLEAN CENTERING */
+input {
+    text-align: center !important; border: none; outline: none; background: transparent;
+    width: 100%; height: 100%; padding: 0 !important; margin: 0 !important;
+    display: block !important; -webkit-appearance: none; border-radius: 0;
+}
+
+/* TEAM NAME - SIMPLIFIED CENTERING */
 .team-header-input { 
     text-align: center !important; 
     font-size: 18px !important; 
     font-weight: bold !important; 
     text-transform: uppercase !important;
-    width: 100% !important;
-    /* Resetting to basic blocks to remove the "ghost boxes" */
-    display: block !important;
-    -webkit-appearance: none;
-    padding: 0 !important;
+    width: 90% !important;
+    margin: 0 auto !important;
 }
 
-/* Ensure hidden cells stay hidden */
-.hidden-cell { visibility: hidden !important; display: none !important; }
-
-
-    
-
-/* Applying a secondary hammer to the row/col specifically */
-.row-1.col-3 {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-}
-
-
-    
 .col-3 input { text-align: left !important; padding-left: 8px !important; }
 .inning-input { font-weight: bold; font-size: 18px; text-align: center !important;}
 
@@ -93,7 +89,7 @@
 </head>
 <body>
 
-<div id="version-stamp">V6.7 - xxxx</div>
+<div id="version-stamp">V6.3 - OK BUTTON RECOVERY</div>
 
 <div class="scroll-container">
     <div class="grid" id="grid1"></div>
@@ -165,31 +161,20 @@ function createGrid(gridElement){
       
       if(r===1 && c<3) {
           cell.classList.add('hidden-cell');
-
-
-
-          } else if(r===1 && c>=3){
-  const inp = document.createElement('input'); 
-  inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
-  
-  if(c>3 && c<=12) inp.value = c-3;
-  if(c===3) {
-      inp.placeholder = "TEAM";
-      // Force Safari to recalculate alignment on every keystroke
-      inp.oninput = () => {
-          const label = document.getElementById(gridElement.id === 'grid1' ? 'team1-label' : 'team2-label');
-          label.textContent = inp.value.toUpperCase() || (gridElement.id === 'grid1' ? "VISITOR" : "HOME");
-          saveData();
-      };
-      // TRICK: Force a redraw when the user finishes typing
-      inp.onblur = () => { inp.style.display = 'none'; inp.offsetHeight; inp.style.display = 'block'; };
-  }
-  cell.appendChild(inp);
-}
-
-
-
-          
+      } else if(r===1 && c>=3){
+        const inp = document.createElement('input'); 
+        inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
+        if(c>3 && c<=12) inp.value = c-3;
+        if(c===3) {
+            inp.placeholder = "TEAM";
+            inp.oninput = () => {
+                const label = document.getElementById(gridElement.id === 'grid1' ? 'team1-label' : 'team2-label');
+                label.textContent = inp.value.toUpperCase() || (gridElement.id === 'grid1' ? "VISITOR" : "HOME");
+                saveData();
+            };
+        }
+        cell.appendChild(inp);
+      }
       else if((c===1 || c===2 || c===3) && r!==1){
         const t = document.createElement('input'); t.classList.add('dual-input', 'border-mid');
         const b = document.createElement('input'); b.classList.add('dual-input');
