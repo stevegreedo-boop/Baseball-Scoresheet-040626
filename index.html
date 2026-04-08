@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V6.2</title>
+<title>BASEBALL SCORESHEET - V6.3</title>
 <style>
 #version-stamp {
-    background: #000; color: #00ffff; padding: 8px 15px; 
+    background: #000; color: #ff00ff; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin: 10px; display: inline-block; font-weight: bold;
 }
@@ -29,18 +29,14 @@ input {
     display: block !important; -webkit-appearance: none; border-radius: 0;
 }
 
-/* TEAM NAME - ABSOLUTE FORCE CENTERING */
-.team-cell-wrapper {
-    display: grid !important;
-    place-items: center !important;
-    width: 100%; height: 100%;
-}
+/* TEAM NAME - SIMPLIFIED CENTERING */
 .team-header-input { 
     text-align: center !important; 
     font-size: 18px !important; 
     font-weight: bold !important; 
     text-transform: uppercase !important;
-    width: 140px !important; /* Fixed width inside the 150px cell to force center */
+    width: 90% !important;
+    margin: 0 auto !important;
 }
 
 .col-3 input { text-align: left !important; padding-left: 8px !important; }
@@ -62,7 +58,6 @@ input {
 .border-mid { border-bottom: 1px solid #bbb !important; }
 .hidden-cell { visibility: hidden !important; border: none !important; }
 
-/* ROW 13 SLASH */
 .diagonal-slash { background-color: #f2f2f2 !important; }
 .mini-canvas { position: absolute; right: 0; top: 0; width: 44px !important; height: 48px !important; pointer-events: none; z-index: 10; }
 
@@ -94,7 +89,7 @@ input {
 </head>
 <body>
 
-<div id="version-stamp">V6.2 - GUIDELINE & CENTER FIX</div>
+<div id="version-stamp">V6.3 - OK BUTTON RECOVERY</div>
 
 <div class="scroll-container">
     <div class="grid" id="grid1"></div>
@@ -146,16 +141,14 @@ const cellDrawings = new Map();
 let currentCell = null, brushColor = 'black', drawing = false, lastX=0, lastY=0;
 const canvas = document.getElementById('popup-canvas'), ctx = canvas.getContext('2d');
 
-function drawGuideline(context, width, height) {
+function drawSlash(context, w, h) {
     context.strokeStyle = '#bbb'; context.lineWidth = 1;
-    context.beginPath(); context.moveTo(0, height); context.lineTo(width, 0); context.stroke();
+    context.beginPath(); context.moveTo(0, h); context.lineTo(w, 0); context.stroke();
 }
 
 function refreshPopup() {
     ctx.clearRect(0,0,400,400);
-    if(currentCell.classList.contains('diagonal-slash')) {
-        drawGuideline(ctx, 400, 400);
-    }
+    if(currentCell && currentCell.classList.contains('diagonal-slash')) drawSlash(ctx, 400, 400);
     const savedData = cellDrawings.get(currentCell);
     if(savedData){ const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, 400, 400); img.src = savedData; }
 }
@@ -169,8 +162,6 @@ function createGrid(gridElement){
       if(r===1 && c<3) {
           cell.classList.add('hidden-cell');
       } else if(r===1 && c>=3){
-        const wrapper = document.createElement('div');
-        wrapper.className = 'team-cell-wrapper';
         const inp = document.createElement('input'); 
         inp.classList.add(c===3 ? 'team-header-input' : 'inning-input');
         if(c>3 && c<=12) inp.value = c-3;
@@ -182,8 +173,7 @@ function createGrid(gridElement){
                 saveData();
             };
         }
-        wrapper.appendChild(inp);
-        cell.appendChild(wrapper);
+        cell.appendChild(inp);
       }
       else if((c===1 || c===2 || c===3) && r!==1){
         const t = document.createElement('input'); t.classList.add('dual-input', 'border-mid');
@@ -208,9 +198,8 @@ function createGrid(gridElement){
       if(r===13 && c>=4) {
           cell.classList.add('diagonal-slash');
           const mini = document.createElement('canvas');
-          mini.className = 'mini-canvas';
-          mini.width = 44; mini.height = 48;
-          drawGuideline(mini.getContext('2d'), 44, 48);
+          mini.className = 'mini-canvas'; mini.width = 44; mini.height = 48;
+          drawSlash(mini.getContext('2d'), 44, 48);
           cell.appendChild(mini);
       }
 
@@ -239,6 +228,7 @@ function createPitchingGrid(containerId) {
     }
 }
 
+// Drawing Logic
 const getCoords = (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -252,27 +242,28 @@ canvas.addEventListener('touchstart', startDraw, {passive: false}); canvas.addEv
 
 document.getElementById('black-btn').onclick = () => brushColor='black';
 document.getElementById('red-btn').onclick = () => brushColor='red';
-document.getElementById('clear-btn').onclick = () => { 
-    cellDrawings.delete(currentCell); 
-    refreshPopup(); 
-};
+document.getElementById('clear-btn').onclick = () => { cellDrawings.delete(currentCell); refreshPopup(); };
 document.getElementById('ph-btn').onclick = (e) => { e.stopPropagation(); currentCell.classList.toggle('ph-border'); saveData(); };
 document.getElementById('rp-btn').onclick = (e) => { e.stopPropagation(); currentCell.classList.toggle('rp-border'); saveData(); };
 document.getElementById('end-btn').onclick = () => { ctx.strokeStyle = '#444'; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(400,400); ctx.stroke(); ctx.beginPath(); ctx.moveTo(400,0); ctx.lineTo(0,400); ctx.stroke(); };
+
 document.getElementById('ok-btn').onclick = () => { 
     if(!currentCell) return; 
     const finalData = canvas.toDataURL(); 
     cellDrawings.set(currentCell, finalData); 
-    let mini = currentCell.querySelector('.mini-canvas');
+    let mini = currentCell.querySelector('.mini-canvas') || document.createElement('canvas');
+    if(!mini.className) { mini.className = 'mini-canvas'; mini.width = 44; mini.height = 48; currentCell.appendChild(mini); }
     const mCtx = mini.getContext('2d'); 
     const img = new Image(); 
     img.onload = () => { 
         mCtx.clearRect(0,0,44,48); 
-        if(currentCell.classList.contains('diagonal-slash')) drawGuideline(mCtx, 44, 48);
+        if(currentCell.classList.contains('diagonal-slash')) drawSlash(mCtx, 44, 48);
         mCtx.drawImage(img, 0, 0, 44, 48); 
         saveData(); 
+        document.getElementById('drawing-popup').style.display = 'none';
+        currentCell = null;
     }; 
-    img.src = finalData; document.getElementById('drawing-popup').style.display = 'none'; 
+    img.src = finalData; 
 };
 
 document.getElementById('clear-all-btn').onclick = () => { if(confirm("Wipe sheet?")) { localStorage.clear(); location.reload(); } };
@@ -284,10 +275,10 @@ function saveData(){
   document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
   document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
   document.querySelectorAll('.p-input-cell input').forEach(i => data.pitch.push(i.value));
-  localStorage.setItem('scoresheetV6_2', JSON.stringify(data));
+  localStorage.setItem('scoresheetV6_3', JSON.stringify(data));
 }
 function loadData(){
-  const saved = JSON.parse(localStorage.getItem('scoresheetV6_2') || '{}');
+  const saved = JSON.parse(localStorage.getItem('scoresheetV6_3') || '{}');
   if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
   const applyData = (cells, savedList) => {
     if(!savedList) return;
@@ -299,12 +290,13 @@ function loadData(){
         if(item.b?.rp) cell.classList.add('rp-border');
         if(item.d) { 
             cellDrawings.set(cell, item.d); 
-            let mini = cell.querySelector('.mini-canvas');
+            let mini = cell.querySelector('.mini-canvas') || document.createElement('canvas');
+            if(!mini.className) { mini.className = 'mini-canvas'; mini.width = 44; mini.height = 48; cell.appendChild(mini); }
             const mCtx = mini.getContext('2d'); 
             const img = new Image(); 
             img.onload = function() { 
                 mCtx.clearRect(0,0,44,48);
-                if(cell.classList.contains('diagonal-slash')) drawGuideline(mCtx, 44, 48);
+                if(cell.classList.contains('diagonal-slash')) drawSlash(mCtx, 44, 48);
                 mCtx.drawImage(this, 0, 0, 44, 48); 
             }; 
             img.src = item.d; 
