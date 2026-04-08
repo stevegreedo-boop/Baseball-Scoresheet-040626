@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V5.5</title>
+<title>BASEBALL SCORESHEET - V5.6</title>
 <style>
 #version-stamp {
-    background: #000; color: #00ff00; padding: 8px 15px; 
+    background: #000; color: #ff00ff; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin-bottom: 15px; display: inline-block; font-weight: bold;
 }
@@ -18,6 +18,7 @@ body {
     touch-action: manipulation; min-width: 800px;
 }
 
+/* HARD INPUT LOCKDOWN */
 input {
     text-align: center !important;
     border: none; outline: none; background: transparent;
@@ -26,11 +27,14 @@ input {
     -webkit-appearance: none; border-radius: 0;
 }
 
-/* FORCE LEFT JUSTIFY FOR BATTING NAMES (COL 3) */
-.col-3 input {
-    text-align: left !important;
-    padding-left: 5px !important;
-}
+/* Batting Name (Col 3) - Left Aligned */
+.col-3 input { text-align: left !important; padding-left: 5px !important; }
+
+/* Inning Number Alignment */
+.inning-input { font-weight: bold; font-size: 18px; text-align: center !important;}
+
+/* BATTER TABLE (COL 1 & 2) CENTERING FIX */
+.col-1 input, .col-2 input { text-align: center !important;}
 
 .grid {
     display: grid; grid-template-columns: 32px 32px 150px repeat(12, 44px);
@@ -48,7 +52,6 @@ input {
 .hidden-cell { visibility: hidden !important; border: none !important; }
 
 .team-header-input { font-size: 18px !important; font-weight: bold !important; text-transform: uppercase; }
-.inning-input { font-weight: bold; font-size: 18px; }
 
 .diagonal-slash { background-color: #f0f0f0 !important; }
 .diagonal-slash::after {
@@ -59,11 +62,19 @@ input {
 
 .mini-canvas { position: absolute; right: 0; top: 0; width: 44px !important; height: 48px !important; pointer-events: none; z-index: 10; }
 
-/* PITCHING TABLE RIGIDITY */
-.pitching-section { display: flex; gap: 15px; margin-top: 30px; width: 755px; }
-.pitching-table { border-collapse: collapse; background: white; font-size: 12px; table-layout: fixed; width: 370px; }
-.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; margin: 0; }
-.pitching-table th { background: #f2f2f2; }
+/* PITCHING TABLE RIGIDITY - STRETCH-TO-FIT */
+.pitching-section { display: flex; gap: 15px; margin-top: 30px; width: 755px; justify-content: space-between;}
+.pitching-table { border-collapse: collapse; background: white; font-size: 12px; table-layout: fixed; width: 365px !important; }
+.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; margin: 0; text-align: center !important;}
+.pitching-table th { background: #f2f2f2; font-weight: bold; }
+
+/* Optimized Widths for stretching table */
+.th-t, .td-t { width: 22px !important; }
+.th-name, .td-name { width: auto !important; } /* Let name stretch to take remaining space */
+.th-dec, .td-dec { width: 35px !important; }
+.th-ip, .td-ip { width: 40px !important; }
+.th-stat, .td-stat { width: 18px !important; } /* Smaller to fit */
+
 
 /* POPUPS */
 #drawing-popup { 
@@ -85,7 +96,7 @@ input {
 </head>
 <body>
 
-<div id="version-stamp">LOADED VERSION: 5.5 (Final Polish & Input fix)</div>
+<div id="version-stamp">LOADED VERSION: 5.6 (Anchored Name Column)</div>
 
 <div class="grid" id="grid1"></div>
 <div class="grid" id="grid2"></div>
@@ -94,23 +105,23 @@ input {
     <table class="pitching-table" id="pitch1">
         <tr><th colspan="10" id="team1-label" style="font-size:15px; height:35px;">VISITOR</th></tr>
         <tr style="height:30px;">
-            <th style="width:25px;">T</th>
-            <th style="width:130px;">NAME</th>
-            <th style="width:35px;">DEC</th>
-            <th style="width:40px;">IP</th>
-            <th style="width:20px;">H</th><th style="width:20px;">R</th><th style="width:20px;">ER</th>
-            <th style="width:20px;">K</th><th style="width:20px;">BB</th><th style="width:20px;">HR</th>
+            <th class="th-t">T</th>
+            <th class="th-name">NAME</th>
+            <th class="th-dec">DEC</th>
+            <th class="th-ip">IP</th>
+            <th class="th-stat">H</th><th class="th-stat">R</th><th class="th-stat">ER</th>
+            <th class="th-stat">K</th><th class="th-stat">BB</th><th class="th-stat">HR</th>
         </tr>
     </table>
     <table class="pitching-table" id="pitch2">
         <tr><th colspan="10" id="team2-label" style="font-size:15px; height:35px;">HOME</th></tr>
         <tr style="height:30px;">
-            <th style="width:25px;">T</th>
-            <th style="width:130px;">NAME</th>
-            <th style="width:35px;">DEC</th>
-            <th style="width:40px;">IP</th>
-            <th style="width:20px;">H</th><th style="width:20px;">R</th><th style="width:20px;">ER</th>
-            <th style="width:20px;">K</th><th style="width:20px;">BB</th><th style="width:20px;">HR</th>
+            <th class="th-t">T</th>
+            <th class="th-name">NAME</th>
+            <th class="th-dec">DEC</th>
+            <th class="th-ip">IP</th>
+            <th class="th-stat">H</th><th class="th-stat">R</th><th class="th-stat">ER</th>
+            <th class="th-stat">K</th><th class="th-stat">BB</th><th class="th-stat">HR</th>
         </tr>
     </table>
 </div>
@@ -209,14 +220,24 @@ function createGrid(gridElement){
 
 function createPitchingTable(tableId) {
     const table = document.getElementById(tableId);
-    const widths = [25, 130, 35, 40, 20, 20, 20, 20, 20, 20];
+    // Apply classes for rigid stretching widths
+    const colClasses = ['td-t','td-name','td-dec','td-ip','td-stat','td-stat','td-stat','td-stat','td-stat','td-stat'];
+    
     for(let i=0; i<8; i++) {
         const tr = document.createElement('tr');
         for(let j=0; j<10; j++) {
             const td = document.createElement('td');
-            td.style.width = widths[j] + "px"; // Force width on every cell
+            td.className = colClasses[j]; // Assign rigid width class
             const input = document.createElement('input');
-            // Force numeric keyboard for stat columns
+            input.classList.add('pitch-input');
+            
+            // Re-apply left-align fix just for pitching name column TD
+            if(j === 1) {
+                input.style.textAlign = "left";
+                input.style.paddingLeft = "5px";
+            }
+            
+            // Force numeric keypad for stat columns
             if(j >= 3) { 
                 input.setAttribute('inputmode', 'decimal'); 
             }
@@ -229,6 +250,7 @@ function createPitchingTable(tableId) {
     }
 }
 
+// Coordinate and Drawing logic (Same as V5.3)
 const getCoords = (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -255,10 +277,10 @@ function saveData(){
   document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
   document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
   document.querySelectorAll('#pitch1 input, #pitch2 input').forEach(i => data.pitch.push(i.value));
-  localStorage.setItem('scoresheetV5_5', JSON.stringify(data));
+  localStorage.setItem('scoresheetV5_6', JSON.stringify(data));
 }
 function loadData(){
-  const saved = JSON.parse(localStorage.getItem('scoresheetV5_5') || '{}');
+  const saved = JSON.parse(localStorage.getItem('scoresheetV5_6') || '{}');
   if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
   const applyData = (cells, savedList) => {
     if(!savedList) return;
