@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-<title>BASEBALL SCORESHEET - V5.6</title>
+<title>BASEBALL SCORESHEET - V5.7</title>
 <style>
 #version-stamp {
-    background: #000; color: #ff00ff; padding: 8px 15px; 
+    background: #000; color: #00ffff; padding: 8px 15px; 
     font-family: monospace; font-size: 14px; border-radius: 5px;
     margin-bottom: 15px; display: inline-block; font-weight: bold;
 }
@@ -18,7 +18,6 @@ body {
     touch-action: manipulation; min-width: 800px;
 }
 
-/* HARD INPUT LOCKDOWN */
 input {
     text-align: center !important;
     border: none; outline: none; background: transparent;
@@ -27,14 +26,19 @@ input {
     -webkit-appearance: none; border-radius: 0;
 }
 
-/* Batting Name (Col 3) - Left Aligned */
+/* TEAM NAME CENTERING - Force it away from Col 3 logic */
+.team-header-input { 
+    text-align: center !important; 
+    font-size: 18px !important; 
+    font-weight: bold !important; 
+    text-transform: uppercase;
+}
+
+/* Force Left Justify ONLY for Batting Names in Row 2-13 */
 .col-3 input { text-align: left !important; padding-left: 5px !important; }
 
 /* Inning Number Alignment */
 .inning-input { font-weight: bold; font-size: 18px; text-align: center !important;}
-
-/* BATTER TABLE (COL 1 & 2) CENTERING FIX */
-.col-1 input, .col-2 input { text-align: center !important;}
 
 .grid {
     display: grid; grid-template-columns: 32px 32px 150px repeat(12, 44px);
@@ -51,8 +55,6 @@ input {
 .border-mid { border-bottom: 1px solid #bbb !important; }
 .hidden-cell { visibility: hidden !important; border: none !important; }
 
-.team-header-input { font-size: 18px !important; font-weight: bold !important; text-transform: uppercase; }
-
 .diagonal-slash { background-color: #f0f0f0 !important; }
 .diagonal-slash::after {
     content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -62,19 +64,19 @@ input {
 
 .mini-canvas { position: absolute; right: 0; top: 0; width: 44px !important; height: 48px !important; pointer-events: none; z-index: 10; }
 
-/* PITCHING TABLE RIGIDITY - STRETCH-TO-FIT */
-.pitching-section { display: flex; gap: 15px; margin-top: 30px; width: 755px; justify-content: space-between;}
-.pitching-table { border-collapse: collapse; background: white; font-size: 12px; table-layout: fixed; width: 365px !important; }
-.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; margin: 0; text-align: center !important;}
-.pitching-table th { background: #f2f2f2; font-weight: bold; }
+/* PITCHING TABLE - PERCENTAGE REWRITE FOR SAFARI */
+.pitching-section { display: flex; gap: 15px; margin-top: 30px; width: 755px; }
+.pitching-table { border-collapse: collapse; background: white; font-size: 12px; table-layout: fixed; width: 370px !important; }
+.pitching-table th, .pitching-table td { border: 1px solid #333; height: 32px; padding: 0; margin: 0; }
 
-/* Optimized Widths for stretching table */
-.th-t, .td-t { width: 22px !important; }
-.th-name, .td-name { width: auto !important; } /* Let name stretch to take remaining space */
-.th-dec, .td-dec { width: 35px !important; }
-.th-ip, .td-ip { width: 40px !important; }
-.th-stat, .td-stat { width: 18px !important; } /* Smaller to fit */
+/* Column Percentage Logic: Total must be 100% */
+.p-t { width: 7%; }
+.p-name { width: 35%; } /* THE BIG TARGET */
+.p-dec { width: 10%; }
+.p-ip { width: 12%; }
+.p-stat { width: 6%; }
 
+.pitch-input-name { text-align: left !important; padding-left: 4px !important; width: 100%; height: 100%; }
 
 /* POPUPS */
 #drawing-popup { 
@@ -96,7 +98,7 @@ input {
 </head>
 <body>
 
-<div id="version-stamp">LOADED VERSION: 5.6 (Anchored Name Column)</div>
+<div id="version-stamp">LOADED VERSION: 5.7 (Percentage Widths)</div>
 
 <div class="grid" id="grid1"></div>
 <div class="grid" id="grid2"></div>
@@ -105,23 +107,23 @@ input {
     <table class="pitching-table" id="pitch1">
         <tr><th colspan="10" id="team1-label" style="font-size:15px; height:35px;">VISITOR</th></tr>
         <tr style="height:30px;">
-            <th class="th-t">T</th>
-            <th class="th-name">NAME</th>
-            <th class="th-dec">DEC</th>
-            <th class="th-ip">IP</th>
-            <th class="th-stat">H</th><th class="th-stat">R</th><th class="th-stat">ER</th>
-            <th class="th-stat">K</th><th class="th-stat">BB</th><th class="th-stat">HR</th>
+            <th class="p-t">T</th>
+            <th class="p-name">NAME</th>
+            <th class="p-dec">DEC</th>
+            <th class="p-ip">IP</th>
+            <th class="p-stat">H</th><th class="p-stat">R</th><th class="p-stat">ER</th>
+            <th class="p-stat">K</th><th class="p-stat">BB</th><th class="p-stat">HR</th>
         </tr>
     </table>
     <table class="pitching-table" id="pitch2">
         <tr><th colspan="10" id="team2-label" style="font-size:15px; height:35px;">HOME</th></tr>
         <tr style="height:30px;">
-            <th class="th-t">T</th>
-            <th class="th-name">NAME</th>
-            <th class="th-dec">DEC</th>
-            <th class="th-ip">IP</th>
-            <th class="th-stat">H</th><th class="th-stat">R</th><th class="th-stat">ER</th>
-            <th class="th-stat">K</th><th class="th-stat">BB</th><th class="th-stat">HR</th>
+            <th class="p-t">T</th>
+            <th class="p-name">NAME</th>
+            <th class="p-dec">DEC</th>
+            <th class="p-ip">IP</th>
+            <th class="p-stat">H</th><th class="p-stat">R</th><th class="p-stat">ER</th>
+            <th class="p-stat">K</th><th class="p-stat">BB</th><th class="p-stat">HR</th>
         </tr>
     </table>
 </div>
@@ -158,14 +160,8 @@ const canvas = document.getElementById('popup-canvas'), ctx = canvas.getContext(
 
 function refreshPopup() {
     ctx.clearRect(0,0,400,400);
-    if (currentCell?.classList.contains('diagonal-slash')) {
-        ctx.save(); ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)'; ctx.lineWidth = 6;
-        ctx.beginPath(); ctx.moveTo(0, 400); ctx.lineTo(400, 0); ctx.stroke(); ctx.restore();
-    }
     const savedData = cellDrawings.get(currentCell);
-    if(savedData){
-        const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, 400, 400); img.src = savedData;
-    }
+    if(savedData){ const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, 400, 400); img.src = savedData; }
 }
 
 function createGrid(gridElement){
@@ -220,28 +216,16 @@ function createGrid(gridElement){
 
 function createPitchingTable(tableId) {
     const table = document.getElementById(tableId);
-    // Apply classes for rigid stretching widths
-    const colClasses = ['td-t','td-name','td-dec','td-ip','td-stat','td-stat','td-stat','td-stat','td-stat','td-stat'];
-    
+    const classes = ['p-t','p-name','p-dec','p-ip','p-stat','p-stat','p-stat','p-stat','p-stat','p-stat'];
     for(let i=0; i<8; i++) {
         const tr = document.createElement('tr');
         for(let j=0; j<10; j++) {
             const td = document.createElement('td');
-            td.className = colClasses[j]; // Assign rigid width class
+            td.className = classes[j];
             const input = document.createElement('input');
-            input.classList.add('pitch-input');
-            
-            // Re-apply left-align fix just for pitching name column TD
-            if(j === 1) {
-                input.style.textAlign = "left";
-                input.style.paddingLeft = "5px";
-            }
-            
-            // Force numeric keypad for stat columns
-            if(j >= 3) { 
-                input.setAttribute('inputmode', 'decimal'); 
-            }
-            if(j===3) { // IP logic
+            if(j === 1) input.classList.add('pitch-input-name');
+            if(j >= 3) input.setAttribute('inputmode', 'decimal'); 
+            if(j === 3) {
                 input.onblur = () => { let val = input.value; if(val && !isNaN(val) && !val.includes('.')) input.value = val + ".0"; saveData(); };
             }
             input.oninput = saveData; td.appendChild(input); tr.appendChild(td);
@@ -250,7 +234,7 @@ function createPitchingTable(tableId) {
     }
 }
 
-// Coordinate and Drawing logic (Same as V5.3)
+// Coordinate and Drawing logic
 const getCoords = (e) => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -277,10 +261,10 @@ function saveData(){
   document.querySelectorAll('#grid1 .cell').forEach(c => data.grid1.push(getCellData(c)));
   document.querySelectorAll('#grid2 .cell').forEach(c => data.grid2.push(getCellData(c)));
   document.querySelectorAll('#pitch1 input, #pitch2 input').forEach(i => data.pitch.push(i.value));
-  localStorage.setItem('scoresheetV5_6', JSON.stringify(data));
+  localStorage.setItem('scoresheetV5_7', JSON.stringify(data));
 }
 function loadData(){
-  const saved = JSON.parse(localStorage.getItem('scoresheetV5_6') || '{}');
+  const saved = JSON.parse(localStorage.getItem('scoresheetV5_7') || '{}');
   if(saved.bg) { document.getElementById('bg-url').value = saved.bg; document.body.style.backgroundImage = `url('${saved.bg}')`; }
   const applyData = (cells, savedList) => {
     if(!savedList) return;
