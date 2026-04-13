@@ -88,6 +88,42 @@ input {
 #position-popup button { padding: 20px; font-size: 20px; font-weight: bold; cursor: pointer; }
 .ph-border { border-left: 6px solid black !important; }
 .rp-border { border-top: 6px solid black !important; }
+
+/* V6.7 CAPTURE MODE STYLING */
+body.capture-active .pitching-wrapper {
+    flex-direction: column !important; /* Stacks the tables vertically */
+    gap: 20px !important;
+}
+
+body.capture-active #version-stamp,
+body.capture-active button, 
+body.capture-active #bg-url,
+body.capture-active #update-bg {
+    display: none !important; /* Hides UI elements for a clean photo */
+}
+
+body.capture-active .scroll-container {
+    overflow: visible !important;
+    width: auto !important;
+}
+
+/* Add a floating 'Exit' button that only shows in Capture Mode */
+#exit-capture {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    padding: 20px;
+    background: red;
+    color: white;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+body.capture-active #exit-capture { display: block; }
+    
+    
 </style>
 </head>
 <body>
@@ -319,6 +355,30 @@ function loadData(){
 
 createGrid(document.getElementById('grid1')); createGrid(document.getElementById('grid2'));
 createPitchingGrid('p-grid1'); createPitchingGrid('p-grid2'); loadData();
+
+    // Create the Toggle Button
+const btnContainer = document.getElementById('update-bg').parentElement;
+const capBtn = document.createElement('button');
+capBtn.textContent = "CAPTURE VIEW";
+capBtn.style = "padding: 15px 25px; cursor: pointer; font-weight:bold; background:#007bff; color:white; border: 1px solid #0056b3; border-radius:8px;";
+btnContainer.appendChild(capBtn);
+
+// Create the Exit Button
+const exitBtn = document.createElement('button');
+exitBtn.id = "exit-capture";
+exitBtn.textContent = "EXIT";
+document.body.appendChild(exitBtn);
+
+capBtn.onclick = () => {
+    document.body.classList.add('capture-active');
+    window.scrollTo(0,0);
+};
+
+exitBtn.onclick = () => {
+    document.body.classList.remove('capture-active');
+};
+
+    
 </script>
 </body>
 </html>
